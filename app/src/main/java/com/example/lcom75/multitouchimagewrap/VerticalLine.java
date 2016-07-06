@@ -6,6 +6,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Point;
+import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.support.v4.view.MotionEventCompat;
@@ -16,25 +18,37 @@ import android.view.ScaleGestureDetector;
 import android.view.View;
 
 import static android.view.MotionEvent.INVALID_POINTER_ID;
+import static com.example.lcom75.multitouchimagewrap.GridFrameLayout.HORIZONTAL_LINE;
+import static com.example.lcom75.multitouchimagewrap.GridFrameLayout.LINE_SIZE_IN_DP;
 
 /**
  * Created by lcom75 on 5/7/16.
  */
 
-public class VerticalLine extends View implements ScaleGestureDetector.OnScaleGestureListener {
+public class VerticalLine extends View {//} implements ScaleGestureDetector.OnScaleGestureListener {
 
     private int mActivePointerId = INVALID_POINTER_ID;
     private ScaleGestureDetector mScaleDetector;
     private float mLastTouchX = 0;
     private float mLastTouchY = 0;
     private float mPosX, mPosY;
-    private static final String TAG = "LineView";
+    private static final String TAG = "VerticalLine";
     Path path;
     Paint paintSimple;
+    PointF[] pathPoint = new PointF[HORIZONTAL_LINE];
+
+    public void onAnchorPositionChanged(int index, float rawX, float rawY) {
+        if (index < pathPoint.length) {
+            pathPoint[index] = new PointF(rawX, rawY);
+            Log.d(TAG, "onAnchorPositionChanged() called with: index = [" + index + "], rawX = [" + rawX + "], rawY = [" + rawY + "]");
+        }
+    }
+
 
     public VerticalLine(Context context) {
         super(context);
         init(context);
+
     }
 
     public VerticalLine(Context context, AttributeSet attrs) {
@@ -54,7 +68,7 @@ public class VerticalLine extends View implements ScaleGestureDetector.OnScaleGe
     }
 
     private void init(Context context) {
-        mScaleDetector = new ScaleGestureDetector(context, this);
+//        mScaleDetector = new ScaleGestureDetector(context, this);
         path = new Path();
         paintSimple = new Paint();
         paintSimple.setColor(Color.RED);
@@ -62,6 +76,11 @@ public class VerticalLine extends View implements ScaleGestureDetector.OnScaleGe
         paintSimple.setStrokeJoin(Paint.Join.ROUND);
         paintSimple.setStrokeWidth(5);
         paintSimple.setAntiAlias(true);
+        for (int i = 0; i < pathPoint.length; i++) {
+            pathPoint[i] = new PointF(0, 0);
+        }
+//        pathPoint[0] = new PointF(-48.00557f, 450.0f);
+        pathPoint[0] = new PointF(120.00557f, 450.0f);
 
     }
 
@@ -75,109 +94,109 @@ public class VerticalLine extends View implements ScaleGestureDetector.OnScaleGe
         r = getRight();
         b = getBottom();
         Log.d(TAG, "onDraw: " + l + ":" + t + ":" + r + ":" + b);
-        Log.d(TAG, "onDraw Point: " + mLastTouchX + ":" + mLastTouchY);
-//        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
         path.reset();
-//        if (mLastTouchX < 0 || mLastTouchY < 0) {
         path.moveTo((r - l) / 2, t);
-//        path.quadTo(30, 736, (r - l) / 2, b);
-        if (mLastTouchX == 0 || mLastTouchY == 0) {
-            path.quadTo(((r - l) / 2), t, ((r - l) / 2), b);
-        } else {
-            path.quadTo(mLastTouchX, mLastTouchY, (r - l) / 2, b);
+        for (int i = 0; i < pathPoint.length; i++) {
+            mLastTouchX = pathPoint[i].x;
+            mLastTouchY = pathPoint[i].y;
+            Log.d(TAG, "onDraw Point: " + mLastTouchX + ":" + mLastTouchY);
+            if (mLastTouchX == 0 || mLastTouchY == 0) {
+//                path.quadTo(((r - l) / 2), t, ((r - l) / 2), b);
+            } else {
+                path.quadTo(mLastTouchX, mLastTouchY, (r - l) / 2, b);
+            }
         }
         canvas.drawPath(path, paintSimple);
+    }
+
+//    @Override
+//    public boolean onTouchEvent(MotionEvent ev) {
+//        // Let the ScaleGestureDetector inspect all events.
+//        mScaleDetector.onTouchEvent(ev);
+//        final int action = MotionEventCompat.getActionMasked(ev);
+//        switch (action) {
+//            case MotionEvent.ACTION_DOWN: {
+//                path = new Path();
+//                final int pointerIndex = MotionEventCompat.getActionIndex(ev);
+//                final float x = MotionEventCompat.getX(ev, pointerIndex);
+//                final float y = MotionEventCompat.getY(ev, pointerIndex);
+//                // Remember where we started (for dragging)
+//                mLastTouchX = x;
+//                mLastTouchY = y;
+//                // Save the ID of this pointer (for dragging)
+//                mActivePointerId = MotionEventCompat.getPointerId(ev, 0);
+////                path.moveTo(0, 0);
+////                path.moveTo(mLastTouchX, mLastTouchY);
+//                break;
+//            }
+//            case MotionEvent.ACTION_UP: {
+//                mActivePointerId = INVALID_POINTER_ID;
+//                break;
+//            }
+//
+//            case MotionEvent.ACTION_MOVE: {
+//                // Find the index of the active pointer and fetch its position
+//                final int pointerIndex =
+//                        MotionEventCompat.findPointerIndex(ev, mActivePointerId);
+//
+//                final float x = MotionEventCompat.getX(ev, pointerIndex);
+//                final float y = MotionEventCompat.getY(ev, pointerIndex);
+//                // Calculate the distance moved
+//                final float dx = x - mLastTouchX;
+//                final float dy = y - mLastTouchY;
+//                mPosX += dx;
+//                mPosY += dy;
+//                invalidate();
+//                // Remember this touch position for the next move event
+//                mLastTouchX = x;
+//                mLastTouchY = y;
+////                path.lineTo(mLastTouchX, mLastTouchY);
+//                break;
+//            }
+//
+//
+//            case MotionEvent.ACTION_CANCEL: {
+//                mActivePointerId = INVALID_POINTER_ID;
+//                break;
+//            }
+//
+//            case MotionEvent.ACTION_POINTER_UP: {
+//                final int pointerIndex = MotionEventCompat.getActionIndex(ev);
+//                final int pointerId = MotionEventCompat.getPointerId(ev, pointerIndex);
+//                if (pointerId == mActivePointerId) {
+//                    // This was our active pointer going up. Choose a new
+//                    // active pointer and adjust accordingly.
+//                    final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
+//                    mLastTouchX = MotionEventCompat.getX(ev, newPointerIndex);
+//                    mLastTouchY = MotionEventCompat.getY(ev, newPointerIndex);
+//                    mActivePointerId = MotionEventCompat.getPointerId(ev, newPointerIndex);
+//                }
+//                break;
+//            }
 //        }
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent ev) {
-        // Let the ScaleGestureDetector inspect all events.
-        mScaleDetector.onTouchEvent(ev);
-        final int action = MotionEventCompat.getActionMasked(ev);
-        switch (action) {
-            case MotionEvent.ACTION_DOWN: {
-                path = new Path();
-                final int pointerIndex = MotionEventCompat.getActionIndex(ev);
-                final float x = MotionEventCompat.getX(ev, pointerIndex);
-                final float y = MotionEventCompat.getY(ev, pointerIndex);
-                // Remember where we started (for dragging)
-                mLastTouchX = x;
-                mLastTouchY = y;
-                // Save the ID of this pointer (for dragging)
-                mActivePointerId = MotionEventCompat.getPointerId(ev, 0);
-//                path.moveTo(0, 0);
-//                path.moveTo(mLastTouchX, mLastTouchY);
-                break;
-            }
-            case MotionEvent.ACTION_UP: {
-                mActivePointerId = INVALID_POINTER_ID;
-                break;
-            }
-
-            case MotionEvent.ACTION_MOVE: {
-                // Find the index of the active pointer and fetch its position
-                final int pointerIndex =
-                        MotionEventCompat.findPointerIndex(ev, mActivePointerId);
-
-                final float x = MotionEventCompat.getX(ev, pointerIndex);
-                final float y = MotionEventCompat.getY(ev, pointerIndex);
-                // Calculate the distance moved
-                final float dx = x - mLastTouchX;
-                final float dy = y - mLastTouchY;
-                mPosX += dx;
-                mPosY += dy;
-                invalidate();
-                // Remember this touch position for the next move event
-                mLastTouchX = x;
-                mLastTouchY = y;
-//                path.lineTo(mLastTouchX, mLastTouchY);
-                break;
-            }
-
-
-            case MotionEvent.ACTION_CANCEL: {
-                mActivePointerId = INVALID_POINTER_ID;
-                break;
-            }
-
-            case MotionEvent.ACTION_POINTER_UP: {
-                final int pointerIndex = MotionEventCompat.getActionIndex(ev);
-                final int pointerId = MotionEventCompat.getPointerId(ev, pointerIndex);
-                if (pointerId == mActivePointerId) {
-                    // This was our active pointer going up. Choose a new
-                    // active pointer and adjust accordingly.
-                    final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
-                    mLastTouchX = MotionEventCompat.getX(ev, newPointerIndex);
-                    mLastTouchY = MotionEventCompat.getY(ev, newPointerIndex);
-                    mActivePointerId = MotionEventCompat.getPointerId(ev, newPointerIndex);
-                }
-                break;
-            }
-        }
-        return true;
-    }
-
-
-    @Override
-    public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
-        Log.d(TAG, "onScale() called with: scaleGestureDetector = [" + scaleGestureDetector.getCurrentSpanX() + "," + scaleGestureDetector.getCurrentSpanY() + "]");
-        return false;
-    }
-
-    @Override
-    public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
-        Log.d(TAG, "onScaleBegin() called with: scaleGestureDetector = [" + scaleGestureDetector.getCurrentSpanX() + "," + scaleGestureDetector.getCurrentSpanY() + "]");
-        return false;
-    }
-
-    @Override
-    public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
-        Log.d(TAG, "onScaleEnd() called with: scaleGestureDetector = [" + scaleGestureDetector.getCurrentSpanX() + "," + scaleGestureDetector.getCurrentSpanY() + "]");
-    }
+//        return true;
+//    }
+//
+//
+//    @Override
+//    public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
+//        Log.d(TAG, "onScale() called with: scaleGestureDetector = [" + scaleGestureDetector.getCurrentSpanX() + "," + scaleGestureDetector.getCurrentSpanY() + "]");
+//        return false;
+//    }
+//
+//    @Override
+//    public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
+//        Log.d(TAG, "onScaleBegin() called with: scaleGestureDetector = [" + scaleGestureDetector.getCurrentSpanX() + "," + scaleGestureDetector.getCurrentSpanY() + "]");
+//        return false;
+//    }
+//
+//    @Override
+//    public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
+//        Log.d(TAG, "onScaleEnd() called with: scaleGestureDetector = [" + scaleGestureDetector.getCurrentSpanX() + "," + scaleGestureDetector.getCurrentSpanY() + "]");
+//    }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(16), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(AndroidUtilities.displayMetrics.heightPixels - AndroidUtilities.getCurrentActionBarHeight(), MeasureSpec.AT_MOST));
+        super.onMeasure(MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(LINE_SIZE_IN_DP), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(AndroidUtilities.displayMetrics.heightPixels - AndroidUtilities.getCurrentActionBarHeight(), MeasureSpec.AT_MOST));
     }
 }

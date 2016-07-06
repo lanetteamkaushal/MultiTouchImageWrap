@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">MultiTouchImageWrap</string>
+    <string name="dragged_data">"Dragged data is "</string>
 </resources>

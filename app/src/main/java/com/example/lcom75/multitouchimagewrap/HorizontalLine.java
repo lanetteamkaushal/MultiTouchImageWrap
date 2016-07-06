@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PointF;
 import android.os.Build;
 import android.support.v4.view.MotionEventCompat;
 import android.util.AttributeSet;
@@ -15,6 +16,9 @@ import android.view.ScaleGestureDetector;
 import android.view.View;
 
 import static android.view.MotionEvent.INVALID_POINTER_ID;
+import static com.example.lcom75.multitouchimagewrap.GridFrameLayout.HORIZONTAL_LINE;
+import static com.example.lcom75.multitouchimagewrap.GridFrameLayout.LINE_SIZE_IN_DP;
+import static com.example.lcom75.multitouchimagewrap.GridFrameLayout.VERTICAL_LINE;
 
 /**
  * Created by lcom75 on 5/7/16.
@@ -27,9 +31,16 @@ public class HorizontalLine extends View implements ScaleGestureDetector.OnScale
     private float mLastTouchX = 0;
     private float mLastTouchY = 0;
     private float mPosX, mPosY;
-    private static final String TAG = "LineView";
+    private static final String TAG = "HorizontalLine";
     Path path;
     Paint paintSimple;
+    PointF[] pathPoint = new PointF[VERTICAL_LINE];
+
+    public void onAnchorPositionChanged(int index, float rawX, float rawY) {
+        if (index < pathPoint.length) {
+            pathPoint[index] = new PointF(rawX, rawY);
+        }
+    }
 
     public HorizontalLine(Context context) {
         super(context);
@@ -61,7 +72,9 @@ public class HorizontalLine extends View implements ScaleGestureDetector.OnScale
         paintSimple.setStrokeJoin(Paint.Join.ROUND);
         paintSimple.setStrokeWidth(5);
         paintSimple.setAntiAlias(true);
-
+        for (int i = 0; i < pathPoint.length; i++) {
+            pathPoint[i] = new PointF(0, 0);
+        }
     }
 
     int l, t, r, b;
@@ -81,21 +94,19 @@ public class HorizontalLine extends View implements ScaleGestureDetector.OnScale
         path.moveTo(l, (b - t) / 2);
 //        path.lineTo(r, (b - t) / 2);
 //        path.quadTo(30, 736, (r - l) / 2, b);
-        if (mLastTouchX == 0 || mLastTouchY == 0) {
+        for (int i = 0; i < pathPoint.length; i++) {
+            mLastTouchX = pathPoint[i].x;
+            mLastTouchY = pathPoint[i].y;
+            if (mLastTouchX == 0 || mLastTouchY == 0) {
 //            path.quadTo(0,24,1080,24);
-            path.quadTo(l, (b - t) / 2, r, (b - t) / 2);
-            Log.d(TAG, "onDraw() Quad called with: left = [" + l + "], top = [" + ((t - b) / 2) + "], right = [" + r + "], bottom = [" + ((t - b) / 2) + "]");
-        } else {
-            path.quadTo(mLastTouchX, mLastTouchY, r, (b - t) / 2);
+                path.quadTo(l, (b - t) / 2, r, (b - t) / 2);
+                Log.d(TAG, "onDraw() Quad called with: left = [" + l + "], top = [" + ((t - b) / 2) + "], right = [" + r + "], bottom = [" + ((t - b) / 2) + "]");
+            } else {
+                path.quadTo(mLastTouchX, mLastTouchY, r, (b - t) / 2);
+            }
         }
         canvas.drawPath(path, paintSimple);
 //        }
-    }
-
-    @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        super.onLayout(changed, left, top, right, bottom);
-        Log.d(TAG, "onLayout() called with: changed = [" + changed + "], left = [" + left + "], top = [" + top + "], right = [" + right + "], bottom = [" + bottom + "]");
     }
 
     @Override
@@ -186,6 +197,6 @@ public class HorizontalLine extends View implements ScaleGestureDetector.OnScale
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(MeasureSpec.makeMeasureSpec(AndroidUtilities.displayMetrics.widthPixels, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(16), MeasureSpec.EXACTLY));
+        super.onMeasure(MeasureSpec.makeMeasureSpec(AndroidUtilities.displayMetrics.widthPixels, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(LINE_SIZE_IN_DP), MeasureSpec.EXACTLY));
     }
 }
