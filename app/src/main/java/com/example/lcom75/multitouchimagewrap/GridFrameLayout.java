@@ -6,6 +6,7 @@ import android.content.ClipDescription;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.os.Build;
@@ -61,10 +62,10 @@ public class GridFrameLayout extends FrameLayout implements GridButton.MoveListe
 
     private void init(Context context) {
         line1 = new VerticalLine(context);
-//        line1.setBackgroundColor(Color.YELLOW);
+        line1.setBackgroundColor(Color.YELLOW);
         addView(line1);//, new FrameLayout.LayoutParams(100, LayoutParams.MATCH_PARENT, Gravity.CENTER));
 //        line2 = new VerticalLine(context);
-////        line2.setBackgroundColor(Color.BLUE);
+//        line2.setBackgroundColor(Color.BLUE);
 //        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(100, LayoutParams.MATCH_PARENT);
 //        params.setMargins(20, 0, 0, 0);
 //        addView(line2);//, params);
@@ -75,7 +76,7 @@ public class GridFrameLayout extends FrameLayout implements GridButton.MoveListe
 //        addView(line3);//, params);
 //
 //        hLine1 = new HorizontalLine(context);
-////        hLine1.setBackgroundColor(Color.YELLOW);
+//        hLine1.setBackgroundColor(Color.YELLOW);
 //        addView(hLine1);
 //        hLine2 = new HorizontalLine(context);
 ////        hLine2.setBackgroundColor(Color.GREEN);
@@ -92,18 +93,18 @@ public class GridFrameLayout extends FrameLayout implements GridButton.MoveListe
         button01.setId(R.id.button01);
         button01.setBackgroundResource(R.drawable.grid_button_bg);
         addView(button01);
-//        button10 = new GridButton(context);
-//        button10.setId(R.id.button10);
-//        button10.setBackgroundResource(R.drawable.grid_button_bg);
-//        addView(button10);
+        button10 = new GridButton(context);
+        button10.setId(R.id.button10);
+        button10.setBackgroundResource(R.drawable.grid_button_bg);
+        addView(button10);
 //        button11 = new GridButton(context);
 //        button11.setId(R.id.button11);
 //        button11.setBackgroundResource(R.drawable.grid_button_bg);
 //        addView(button11);
-//        button20 = new GridButton(context);
-//        button20.setId(R.id.button20);
-//        button20.setBackgroundResource(R.drawable.grid_button_bg);
-//        addView(button20);
+        button20 = new GridButton(context);
+        button20.setId(R.id.button20);
+        button20.setBackgroundResource(R.drawable.grid_button_bg);
+        addView(button20);
 //        button21 = new GridButton(context);
 //        button21.setId(R.id.button21);
 //        button21.setBackgroundResource(R.drawable.grid_button_bg);
@@ -111,9 +112,9 @@ public class GridFrameLayout extends FrameLayout implements GridButton.MoveListe
 
         button00.setListener(this);
         button01.setListener(this);
-//        button10.setListener(this);
+        button10.setListener(this);
 //        button11.setListener(this);
-//        button20.setListener(this);
+        button20.setListener(this);
 //        button21.setListener(this);
 
     }
@@ -322,7 +323,7 @@ public class GridFrameLayout extends FrameLayout implements GridButton.MoveListe
             }
         } else if (id == R.id.button01) {
             if (line1 != null) {
-                line1.onAnchorPositionChanged(0, dX, dY);
+                line1.onAnchorPositionChanged(1, dX, dY);
                 line1.invalidate();
             }
             if (hLine2 != null) {
@@ -347,6 +348,29 @@ public class GridFrameLayout extends FrameLayout implements GridButton.MoveListe
                 hLine2.onAnchorPositionChanged(1, dX, dY);
                 hLine2.invalidate();
             }
+        } else if (id == R.id.button20) {
+            if (line3 != null) {
+                line3.onAnchorPositionChanged(1, dX, dY);
+                line3.invalidate();
+            }
+            if (hLine1 != null) {
+                hLine1.onAnchorPositionChanged(2, dX, dY);
+                hLine1.invalidate();
+            }
+        }
+    }
+
+    @Override
+    public void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+        Paint paintSimple = new Paint();
+        paintSimple.setColor(Color.RED);
+        paintSimple.setStyle(Paint.Style.STROKE);
+        paintSimple.setStrokeJoin(Paint.Join.ROUND);
+        paintSimple.setStrokeWidth(2);
+        paintSimple.setAntiAlias(true);
+        if (VerticalLine.firstPoint != null) {
+            canvas.drawCircle((float) ((198 + VerticalLine.firstPoint.x) - AndroidUtilities.dp(8)), VerticalLine.firstPoint.y - AndroidUtilities.dp(8), AndroidUtilities.dp(8), paintSimple);
         }
     }
 }

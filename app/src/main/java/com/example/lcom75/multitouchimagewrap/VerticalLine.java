@@ -36,6 +36,7 @@ public class VerticalLine extends View {//} implements ScaleGestureDetector.OnSc
     Path path;
     Paint paintSimple;
     PointF[] pathPoint = new PointF[HORIZONTAL_LINE];
+    public static PointF firstPoint = null;
 
     public void onAnchorPositionChanged(int index, float rawX, float rawY) {
         if (index < pathPoint.length) {
@@ -80,33 +81,68 @@ public class VerticalLine extends View {//} implements ScaleGestureDetector.OnSc
             pathPoint[i] = new PointF(0, 0);
         }
 //        pathPoint[0] = new PointF(-48.00557f, 450.0f);
-        pathPoint[0] = new PointF(120.00557f, 450.0f);
+//        pathPoint[0] = new PointF(96f, 450.0f);
+        firstPoint = pathPoint[0];
+//        pathPoint[1] = new PointF(120.00557f, 450.0f);
 
     }
 
     int l, t, r, b;
 
+    private static Path generateWaveShape() {
+        Path wave = new Path();
+        wave.moveTo(-15, 0);
+        wave.cubicTo(-15, 10, -5, 10, -5, 0);
+        wave.cubicTo(-5, 10, 5, 10, 5, 0);
+        wave.cubicTo(5, 10, 15, 10, 15, 0);
+        wave.lineTo(15, 35);
+        wave.lineTo(-15, 35);
+        wave.close();
+
+        return wave;
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
+//        super.onDraw(canvas);
         l = getLeft();
         t = getTop();
         r = getRight();
         b = getBottom();
         Log.d(TAG, "onDraw: " + l + ":" + t + ":" + r + ":" + b);
         path.reset();
+//        path = generateWaveShape();
         path.moveTo((r - l) / 2, t);
-        for (int i = 0; i < pathPoint.length; i++) {
-            mLastTouchX = pathPoint[i].x;
-            mLastTouchY = pathPoint[i].y;
-            Log.d(TAG, "onDraw Point: " + mLastTouchX + ":" + mLastTouchY);
-            if (mLastTouchX == 0 || mLastTouchY == 0) {
-//                path.quadTo(((r - l) / 2), t, ((r - l) / 2), b);
-            } else {
-                path.quadTo(mLastTouchX, mLastTouchY, (r - l) / 2, b);
-            }
+//        for (int i = 0; i < pathPoint.length; i++) {
+        mLastTouchX = pathPoint[0].x;
+        mLastTouchY = pathPoint[0].y - l;
+        Log.d(TAG, "onDraw Point: " + mLastTouchX + ":" + mLastTouchY);
+        if ((pathPoint[1].x == 0 || pathPoint[1].y == 0) && (pathPoint[0].x == 0 || pathPoint[0].y == 0)) {
+            path.lineTo((r - l) / 2, b);
+        } else if (pathPoint[1].x == 0 || pathPoint[1].y == 0) {
+            path.lineTo(mLastTouchX, mLastTouchY);
+            path.lineTo((r - l) / 2, b);
+        } else {
+//            int diff = 30;
+//            path.quadTo(mLastTouchX, mLastTouchY, pathPoint[1].x, pathPoint[1].y - diff);
+//            path.quadTo(pathPoint[1].x, pathPoint[1].y - diff, pathPoint[1].x, pathPoint[1].y + diff);
+//            path.quadTo(pathPoint[1].x, pathPoint[1].y + diff, (r - l) / 2, b);
+            path.lineTo(mLastTouchX, mLastTouchY);
+            path.lineTo(pathPoint[1].x, pathPoint[1].y);
+            path.lineTo((r - l) / 2, b);
         }
+        path.close();
         canvas.drawPath(path, paintSimple);
+
+    }
+
+    int[] interpolate(int x0, int y0, int x1, int y1, int x2, int y2, double t) {
+        double t1 = 1.0 - t;
+        double tSq = t * t;
+        double denom = 2.0 * t * t1;
+        int cx = (int) ((x1 - t1 * t1 * x0 - tSq * x2) / denom);
+        int cy = (int) ((y1 - t1 * t1 * y0 - tSq * y2) / denom);
+        return new int[]{cx, cy};
     }
 
 //    @Override

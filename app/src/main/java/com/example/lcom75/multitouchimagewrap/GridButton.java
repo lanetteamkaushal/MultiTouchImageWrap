@@ -8,6 +8,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -29,6 +30,7 @@ public class GridButton extends Button implements View.OnLongClickListener, View
     private myDragEventListener mDragListen;
     private static final String TAG = "GridButton";
     MoveListener listener;
+    Rect boundries;
 
     public interface MoveListener {
         void onButtonPostionChanged(int id, float dX, float dY);
@@ -65,6 +67,7 @@ public class GridButton extends Button implements View.OnLongClickListener, View
         mDragListen = new myDragEventListener();
         setOnDragListener(mDragListen);
         setOnTouchListener(null);
+        boundries = new Rect();
     }
 
     @Override
@@ -80,8 +83,10 @@ public class GridButton extends Button implements View.OnLongClickListener, View
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-//        if (changed)
-        Log.d(TAG, "onLayout() called with: changed = [" + changed + "], left = [" + left + "], top = [" + top + "], right = [" + right + "], bottom = [" + bottom + "]");
+        if (changed) {
+            Log.d(TAG, "onLayout() called with: changed = [" + changed + "], left = [" + left + "], top = [" + top + "], right = [" + right + "], bottom = [" + bottom + "]");
+            boundries.set(left - AndroidUtilities.dp(16), top - AndroidUtilities.dp(16), right + AndroidUtilities.dp(16), bottom + AndroidUtilities.dp(16));
+        }
     }
 
     @Override
@@ -111,6 +116,10 @@ public class GridButton extends Button implements View.OnLongClickListener, View
                 break;
 
             case MotionEvent.ACTION_MOVE:
+                if (!boundries.contains(Math.round(event.getRawX()), Math.round(event.getRawY()))) {
+                    Log.d(TAG, "onTouch: "+boundries.toString());
+                    return false;
+                }
                 Log.d(TAG, "onTouch Move: " + (event.getRawX() + dX) + "::" + (event.getRawY() + dY));
                 view.animate()
                         .x(event.getRawX() + dX)
@@ -148,7 +157,7 @@ public class GridButton extends Button implements View.OnLongClickListener, View
 
                 if (listener != null) {
                     listener.onButtonPostionChanged(getId(),
-                            event.getRawX() + dX // - (AndroidUtilities.dp(LINE_SIZE_IN_DP) / 2))
+                            event.getRawX() + dX// - (AndroidUtilities.dp(LINE_SIZE_IN_DP) / 2)
                             , event.getRawY() + dY);// - (AndroidUtilities.dp(LINE_SIZE_IN_DP) / 2));
                 }
                 break;

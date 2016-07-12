@@ -94,17 +94,24 @@ public class HorizontalLine extends View implements ScaleGestureDetector.OnScale
         path.moveTo(l, (b - t) / 2);
 //        path.lineTo(r, (b - t) / 2);
 //        path.quadTo(30, 736, (r - l) / 2, b);
+        float lastPointX = 0, lastPointY = 0;
+        lastPointX = l;
+        lastPointY = (b - t) / 2;
         for (int i = 0; i < pathPoint.length; i++) {
             mLastTouchX = pathPoint[i].x;
             mLastTouchY = pathPoint[i].y;
             if (mLastTouchX == 0 || mLastTouchY == 0) {
 //            path.quadTo(0,24,1080,24);
                 path.quadTo(l, (b - t) / 2, r, (b - t) / 2);
-                Log.d(TAG, "onDraw() Quad called with: left = [" + l + "], top = [" + ((t - b) / 2) + "], right = [" + r + "], bottom = [" + ((t - b) / 2) + "]");
+                Log.d(TAG, "onDraw() Quad called with: left = [" + l + "], top = [" + ((b - t) / 2) + "], right = [" + r + "], bottom = [" + ((b - t) / 2) + "]");
             } else {
-                path.quadTo(mLastTouchX, mLastTouchY, r, (b - t) / 2);
+                path.quadTo(lastPointX, lastPointY, mLastTouchX, mLastTouchY);
+                Log.d(TAG, "onDraw: Quad called with: left = [" + mLastTouchX + "], top = [" + mLastTouchY + "], right = [" + r + "], bottom = [" + ((b - t) / 2) + "]");
             }
+            lastPointX = mLastTouchX;
+            lastPointY = mLastTouchY;
         }
+        path.close();
         canvas.drawPath(path, paintSimple);
 //        }
     }
