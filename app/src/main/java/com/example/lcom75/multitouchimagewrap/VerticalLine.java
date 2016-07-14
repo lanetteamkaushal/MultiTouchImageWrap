@@ -80,7 +80,7 @@ public class VerticalLine extends View {//} implements ScaleGestureDetector.OnSc
         for (int i = 0; i < pathPoint.length; i++) {
             pathPoint[i] = new PointF(0, 0);
         }
-//        pathPoint[0] = new PointF(-48.00557f, 450.0f);
+        pathPoint[0] = new PointF(202.05478f, 310.05103f);
 //        pathPoint[0] = new PointF(96f, 450.0f);
         firstPoint = pathPoint[0];
 //        pathPoint[1] = new PointF(120.00557f, 450.0f);
