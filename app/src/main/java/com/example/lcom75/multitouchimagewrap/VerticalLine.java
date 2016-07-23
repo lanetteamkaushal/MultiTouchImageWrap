@@ -233,6 +233,6 @@ public class VerticalLine extends View {//} implements ScaleGestureDetector.OnSc
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(LINE_SIZE_IN_DP), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(AndroidUtilities.displayMetrics.heightPixels - AndroidUtilities.getCurrentActionBarHeight(), MeasureSpec.AT_MOST));
+        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(AndroidUtilities.displayMetrics.heightPixels - AndroidUtilities.getCurrentActionBarHeight(), MeasureSpec.AT_MOST));
     }
 }

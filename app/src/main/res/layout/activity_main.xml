@@ -7,8 +7,9 @@
     android:layout_height="match_parent"
     tools:context="com.example.lcom75.multitouchimagewrap.MainActivity">
 
-    <com.example.lcom75.multitouchimagewrap.GridFrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+    <com.example.lcom75.multitouchimagewrap.GridFrameLayoutV1
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:background="@android:color/holo_blue_bright" />
 
 </android.support.constraint.ConstraintLayout>

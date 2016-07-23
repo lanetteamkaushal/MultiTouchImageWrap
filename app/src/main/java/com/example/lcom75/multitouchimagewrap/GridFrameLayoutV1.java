@@ -2,11 +2,16 @@ package com.example.lcom75.multitouchimagewrap;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -19,45 +24,117 @@ import android.widget.FrameLayout;
  * Created by lcom75 on 5/7/16.
  */
 
-public class GridFrameLayout extends FrameLayout implements GridButton.MoveListener {
-    VerticalLine line1, line2, line3;
-    HorizontalLine hLine1, hLine2, hLine3;
+public class GridFrameLayoutV1 extends FrameLayout implements GridButton.MoveListener {
+    private static final String TAG = "ImageWrapView";
+    private static final int VERTICAL_LINE = 4;
+    private static final int HORIZONTAL_LINE = 3;
+    private static final int COUNT = (VERTICAL_LINE + 1) * (HORIZONTAL_LINE + 1);
+    public static final int LINE_SIZE_IN_DP = 32;
+    private static float spaceX, spaceY;
+    private final float[] mVerts = new float[COUNT * 2];
+    private final float[] mOrig = new float[COUNT * 2];
+    private final Matrix mMatrix = new Matrix();
+    private final Matrix mInverse = new Matrix();
+    PointF redoEvent, undoEvent;
+    RectF topRect, leftRect, bottomRect, rightRect;
+    private Bitmap mBitmap;
+    private float clickX, clickY;
+    private Paint linePaint, p2;
+    private float[] dst, undo; //Global
+    private float w, h;
+    private int count = 0;
+    /***
+     * Allowed max distance till do not show point
+     */
+    private float toleranceWidth, toleranceHeight;
+    private int xPosition = 0;
+    private int yPosition = 0;
+    private Path path1 = new Path();
+    private Path path2 = new Path();
+    private Path path3 = new Path();
+    private Path path4 = new Path();
+    private Path path5 = new Path();
+    private int mLastWarpX = -9999; // don't match a touch coordinate
+    private int mLastWarpY;
     GridButton button00, button01, button10, button11, button20, button21;
-    PointF pButton00, pButton01, pButton10, pButton11, pButton20, pButton21;
-    private final Rect mTmpContainerRect = new Rect();
-    private final Rect mTmpChildRect = new Rect();
     private int mLeftWidth;
     private int mRightWidth;
-    private static final String TAG = "GridFrameLayout";
-    public static final int VERTICAL_LINE = 3;
-    public static final int HORIZONTAL_LINE = 2;
-    public static final int LINE_SIZE_IN_DP = 32;
-    boolean isDraw = false;
-    private float[] dst, undo;
+    private final Rect mTmpContainerRect = new Rect();
+    private final Rect mTmpChildRect = new Rect();
+    Paint redArea;
 
-
-    public GridFrameLayout(Context context) {
+    public GridFrameLayoutV1(Context context) {
         super(context);
         init(context);
     }
 
-    public GridFrameLayout(Context context, AttributeSet attrs) {
+    public GridFrameLayoutV1(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context);
     }
 
-    public GridFrameLayout(Context context, AttributeSet attrs, int defStyleAttr) {
+    public GridFrameLayoutV1(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public GridFrameLayout(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public GridFrameLayoutV1(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(context);
     }
 
     private void init(Context context) {
+        mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.autumn);
+
+        w = mBitmap.getWidth();
+        h = mBitmap.getHeight();
+        toleranceWidth = Math.max((((w - (16 * HORIZONTAL_LINE)) / (HORIZONTAL_LINE)) / 4), 16);
+        toleranceHeight = Math.max((((h - (16 * VERTICAL_LINE)) / (VERTICAL_LINE)) / 4), 16);
+        Log.d(TAG, "init: " + toleranceWidth + "::" + toleranceHeight);
+        // construct our mesh
+        int index = 0;
+        for (int y = 0; y <= VERTICAL_LINE; y++) {
+            float fy = h * y / VERTICAL_LINE;
+            for (int x = 0; x <= HORIZONTAL_LINE; x++) {
+                float fx = w * x / HORIZONTAL_LINE;
+                Log.e(TAG, "setX " + fx + "setY " + fy + "index " + index);
+                setXY(mVerts, index, fx, fy);
+                setXY(mOrig, index, fx, fy);
+                index += 1;
+                Log.d(TAG, "SampleView: " + x + ":" + y + ":" + w + ":" + HORIZONTAL_LINE + ":fx:" + fx + ":" + fy);
+                dst = mVerts;//Assign dst here just once
+            }
+        }
+        linePaint = new Paint();
+        linePaint.setColor(Color.WHITE);
+        linePaint.setAntiAlias(true);
+        linePaint.setStyle(Paint.Style.STROKE);
+        linePaint.setStrokeWidth(5);
+
+        redArea = new Paint();
+        redArea.setColor(Color.argb(0, 0, 0, 0));
+        redArea.setStyle(Paint.Style.FILL);
+
+//        mMatrix.setTranslate(10, 10);
+//        mMatrix.invert(mInverse);
+
+        p2 = new Paint();
+        p2.setColor(Color.WHITE);
+
+        undoEvent = new PointF(0, 0);
+        redoEvent = new PointF(0, 0);
+
+        topRect = new RectF();
+        leftRect = new RectF();
+        bottomRect = new RectF();
+        rightRect = new RectF();
+
+        topRect.set(-16, -16, w, toleranceHeight);
+        leftRect.set(-16, -16, toleranceWidth, h);
+        rightRect.set((w - toleranceWidth), -16, w + 16, h + 16);
+        bottomRect.set(-16, (h - toleranceHeight), w + 16, h + 16);
+
         button00 = new GridButton(context);
         button00.setId(R.id.button00);
         button00.setBackgroundResource(R.drawable.grid_button_bg);
@@ -89,6 +166,19 @@ public class GridFrameLayout extends FrameLayout implements GridButton.MoveListe
         button11.setListener(this);
         button20.setListener(this);
         button21.setListener(this);
+
+    }
+
+    private static void setXY(float[] array, int index, float x, float y) {
+
+        if (index == 1)
+            spaceX = x;
+
+        if (index == 5)
+            spaceY = y;
+
+        array[index * 2 + 0] = x;
+        array[index * 2 + 1] = y;
 
     }
 
@@ -156,7 +246,7 @@ public class GridFrameLayout extends FrameLayout implements GridButton.MoveListe
         final int count = getChildCount();
         int leftPos;
         int rightPos = right - left - getPaddingRight();
-        leftPos = (rightPos - (VERTICAL_LINE * AndroidUtilities.dp(LINE_SIZE_IN_DP))) / (VERTICAL_LINE + 1);
+        leftPos = (rightPos - (VERTICAL_LINE * AndroidUtilities.dp(LINE_SIZE_IN_DP))) / (VERTICAL_LINE);
         int singlePiece = leftPos;
 
         final int parentTop =0; getPaddingTop();
@@ -165,7 +255,7 @@ public class GridFrameLayout extends FrameLayout implements GridButton.MoveListe
         final int parentLeft = getPaddingLeft();
         final int parentRight = right - left - getPaddingRight();
 
-        int topPos = (bottom - (HORIZONTAL_LINE * AndroidUtilities.dp(LINE_SIZE_IN_DP))) / (HORIZONTAL_LINE + 1);
+        int topPos = (bottom - (HORIZONTAL_LINE * AndroidUtilities.dp(LINE_SIZE_IN_DP))) / (HORIZONTAL_LINE);
         int hSinglePiece = topPos;
 
         Log.d(TAG, "onLayout" + ":ParentTop:" + parentTop + ":parentBottom:" + parentBottom
@@ -246,50 +336,50 @@ public class GridFrameLayout extends FrameLayout implements GridButton.MoveListe
     public void onButtonPostionChanged(int id, float dX, float dY) {
         Log.d(TAG, "onButtonPostionChanged() called with: id = [" + id + "], dX = [" + dX + "], dY = [" + dY + "]");
         if (id == R.id.button00) {
-            if (line1 != null) {
-                line1.onAnchorPositionChanged(0, dX, dY);
-                line1.invalidate();
-            }
-            if (hLine1 != null) {
-                hLine1.onAnchorPositionChanged(0, dX, dY);
-                hLine1.invalidate();
-            }
+//            if (line1 != null) {
+//                line1.onAnchorPositionChanged(0, dX, dY);
+//                line1.invalidate();
+//            }
+//            if (hLine1 != null) {
+//                hLine1.onAnchorPositionChanged(0, dX, dY);
+//                hLine1.invalidate();
+//            }
         } else if (id == R.id.button01) {
-            if (line1 != null) {
-                line1.onAnchorPositionChanged(1, dX, dY);
-                line1.invalidate();
-            }
-            if (hLine2 != null) {
-                hLine2.onAnchorPositionChanged(1, dX, dY);
-                hLine2.invalidate();
-            }
+//            if (line1 != null) {
+//                line1.onAnchorPositionChanged(1, dX, dY);
+//                line1.invalidate();
+//            }
+//            if (hLine2 != null) {
+//                hLine2.onAnchorPositionChanged(1, dX, dY);
+//                hLine2.invalidate();
+//            }
         } else if (id == R.id.button10) {
-            if (line2 != null) {
-                line2.onAnchorPositionChanged(1, dX, dY);
-                line2.invalidate();
-            }
-            if (hLine1 != null) {
-                hLine1.onAnchorPositionChanged(0, dX, dY);
-                hLine1.invalidate();
-            }
+//            if (line2 != null) {
+//                line2.onAnchorPositionChanged(1, dX, dY);
+//                line2.invalidate();
+//            }
+//            if (hLine1 != null) {
+//                hLine1.onAnchorPositionChanged(0, dX, dY);
+//                hLine1.invalidate();
+//            }
         } else if (id == R.id.button11) {
-            if (line2 != null) {
-                line2.onAnchorPositionChanged(1, dX, dY);
-                line2.invalidate();
-            }
-            if (hLine2 != null) {
-                hLine2.onAnchorPositionChanged(1, dX, dY);
-                hLine2.invalidate();
-            }
+//            if (line2 != null) {
+//                line2.onAnchorPositionChanged(1, dX, dY);
+//                line2.invalidate();
+//            }
+//            if (hLine2 != null) {
+//                hLine2.onAnchorPositionChanged(1, dX, dY);
+//                hLine2.invalidate();
+//            }
         } else if (id == R.id.button20) {
-            if (line3 != null) {
-                line3.onAnchorPositionChanged(1, dX, dY);
-                line3.invalidate();
-            }
-            if (hLine1 != null) {
-                hLine1.onAnchorPositionChanged(2, dX, dY);
-                hLine1.invalidate();
-            }
+//            if (line3 != null) {
+//                line3.onAnchorPositionChanged(1, dX, dY);
+//                line3.invalidate();
+//            }
+//            if (hLine1 != null) {
+//                hLine1.onAnchorPositionChanged(2, dX, dY);
+//                hLine1.invalidate();
+//            }
         }
     }
 

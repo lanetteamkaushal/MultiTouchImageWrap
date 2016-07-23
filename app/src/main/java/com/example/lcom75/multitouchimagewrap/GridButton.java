@@ -157,8 +157,8 @@ public class GridButton extends Button implements View.OnLongClickListener, View
 
                 if (listener != null) {
                     listener.onButtonPostionChanged(getId(),
-                            event.getRawX() + dX// - (AndroidUtilities.dp(LINE_SIZE_IN_DP) / 2)
-                            , event.getRawY() + dY);// - (AndroidUtilities.dp(LINE_SIZE_IN_DP) / 2));
+                            event.getRawX()// + dX// - (AndroidUtilities.dp(LINE_SIZE_IN_DP) / 2)
+                            , event.getRawY());// + dY);// - (AndroidUtilities.dp(LINE_SIZE_IN_DP) / 2));
                 }
                 break;
             default:
